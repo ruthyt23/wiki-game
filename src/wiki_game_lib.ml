@@ -1,4 +1,5 @@
 open! Core
+module Lambda_soup_utilities = Lambda_soup_utilities
 
 let command =
   Command.group
