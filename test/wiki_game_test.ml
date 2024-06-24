@@ -163,3 +163,36 @@ let%expect_test "get_linked_articles" =
 /wiki/Strawberry
 |}]
 ;;
+
+let%expect_test "get_credits" =
+  let contents =
+    {|<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <title>My Blog</title>
+        <link rel="stylesheet" href="style.css">
+    </head>
+    <body>
+      <ul>
+        <li><a class='ipc-primary-image-list-card__title'>Apple</a></li>
+        <li>Orange</li>
+        <li><a class='ipc-primary-image-list-card__title'>Banana</a></li>
+        <li>Kiwi</li>
+        <li>Strawberry</li>
+        <li><a class='ipc-primary-image-list-card__title'>Mango</a></li>
+      </ul>
+    </body>
+    <script src="index.js"></script>
+</html>
+|}
+  in
+  List.iter (Imdb.get_credits contents) ~f:(fun x -> print_endline x);
+  [%expect {| 
+Apple
+Banana
+Mango
+|}]
+;;

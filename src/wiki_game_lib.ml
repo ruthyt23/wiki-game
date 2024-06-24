@@ -1,6 +1,7 @@
 open! Core
 module Lambda_soup_utilities = Lambda_soup_utilities
 module Wiki_game = Wiki_game
+module Imdb = Imdb
 
 let command =
   Command.group
