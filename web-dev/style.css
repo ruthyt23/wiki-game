@@ -1,6 +1,10 @@
 body {
     max-width: 1000px;
     margin: auto;
-    background: #FAFAFA;
+    background: #a1e1ff;
     font-family: Helvetica;
+}
+
+#heading {
+    color: #9966ff;
 }
