@@ -123,3 +123,43 @@ kiwi
 strawberry
 |}]
 ;;
+
+let%expect_test "get_linked_articles" =
+  let contents =
+    {|<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <title>My Blog</title>
+        <link rel="stylesheet" href="style.css">
+    </head>
+    <body>
+      <ul>
+        <li><a href='/wiki/Talk:Apple'>apple</li>
+        <li>orange</li>
+        <li><a href='/wiki/Banana'>banana</li>
+      </ul>
+      <ul>
+        <li>watermelon</li>
+        <li>kiwi</li>
+        <li>grapes</li>
+      </ul>
+      <ul>
+        <li>pineapple</li>
+        <li><a href='/wiki/Strawberry'>strawberry</li>
+        <li>peach</li>
+      </ul>
+    </body>
+    <script src="index.js"></script>
+</html>
+|}
+  in
+  List.iter (Wiki_game.get_linked_articles contents) ~f:(fun x ->
+    print_endline x);
+  [%expect {| 
+/wiki/Banana
+/wiki/Strawberry
+|}]
+;;
