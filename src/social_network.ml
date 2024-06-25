@@ -125,9 +125,25 @@ let visualize_command =
 (* [find_friend_group network ~person] returns a list of all people who are
    mutually connected to the provided [person] in the provided [network]. *)
 let find_friend_group network ~person : Person.t list =
-  ignore (network : Network.t);
-  ignore (person : Person.t);
-  failwith "TODO"
+  let graph = G.create () in
+  Set.iter network ~f:(fun (person1, person2) ->
+    G.add_edge graph person1 person2);
+  let to_visit = Queue.create () in
+  Queue.enqueue to_visit person;
+  let visited = Hash_set.create (module String) in
+  Hash_set.add visited person;
+  while not (Queue.is_empty to_visit) do
+    match Queue.dequeue to_visit with
+    | None -> ()
+    | Some current_person ->
+      List.iter (G.succ graph current_person) ~f:(fun x ->
+        match Hash_set.find visited ~f:(fun y -> String.equal x y) with
+        | Some _ -> ()
+        | _ ->
+          Queue.enqueue to_visit x;
+          Hash_set.add visited x)
+  done;
+  Hash_set.to_list visited
 ;;
 
 (* let find_friend_group network ~person : Person.t list = let connections =
