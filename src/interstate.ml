@@ -37,9 +37,6 @@ module Interstate = struct
   ;;
 
   let of_file input_file =
-    print_endline (no_periods "St. Louis");
-    print_endline (no_periods "Washington D.C.");
-    print_endline (no_periods "Terre Haute");
     let interstate_system_lines =
       In_channel.read_lines (File_path.to_string input_file)
     in
