@@ -183,10 +183,39 @@ module Nodes = struct
      -- that is the origin has been marked as [Origin] and nodes on the
      shortest path have been marked as [Done] -- return the path from the
      origin to the given [distination]. *)
-  let path t destination : Node_id.t list = []
+  let path t destination : Node_id.t list =
+    let path = Stack.create () in
+    Stack.push path destination;
+    let found = ref false in
+    while not !found do
+      let final_node = Stack.peek path in
+      match state t final_node with
+      | Origin -> found.contents <- true
+      | Done { via } -> Stack.push via
+      | Unseen -> ()
+      | Todo { distance; via } -> ()
+    done;
+    Stack.to_list path
+  ;;
 
   (* Excercise 5: Write an expect test for the [path] function above. *)
-  let%expect_test "path" = ()
+  let%expect_test "path" =
+    let n = Node_id.create in
+    let n0, n1, n2, n3, n4, n5 = n 0, n 1, n 2, n 3, n 4, n 5 in
+    let t =
+      [ n0, { Node.state = Origin }
+      ; n1, { Node.state = Done { via = n0 } }
+      ; n2, { Node.state = Done { via = n1 } }
+      ; n3, { Node.state = Todo { distance = 2; via = n1 } }
+      ; n4, { Node.state = Done { via = n2 } }
+      ; n5, { Node.state = Unseen }
+      ]
+      |> Node_id.Map.of_alist_exn
+    in
+    let next_node = next_node t in
+    print_s [%message (next_node : (Node_id.t * (int * Node_id.t)) option)];
+    [%expect {| Path: 0 1 2 4 |}]
+  ;;
 end
 
 (* Exercise 6: Using the functions and types above, implement Dijkstras graph
