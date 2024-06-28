@@ -145,6 +145,24 @@ let visualize_command =
         printf !"Done! Wrote dot file to %{File_path}\n%!" output_file]
 ;;
 
+(* BFS implementation - doesn't always work let find_path ~origin
+   ~destination ~how_to_fetch () = let visited = Hash_set.create (module
+   String) in let path = Stack.create () in let to_visit = Queue.create () in
+   Queue.enqueue to_visit (origin, []); let found = ref false in while not
+   !found do match Queue.dequeue to_visit with | None -> () | Some (page,
+   history) -> if String.equal destination page then ( List.iter history
+   ~f:(fun x -> Stack.push path x); Stack.push path page; ignore visited;
+   ignore how_to_fetch; found.contents <- true) else ( let origin_link =
+   match how_to_fetch with | File_fetcher.How_to_fetch.Local root -> ignore
+   root; origin | Remote -> "https://en.wikipedia.org" ^ origin in let
+   neighbors = get_linked_articles (File_fetcher.fetch_exn how_to_fetch
+   ~resource:origin_link) in List.iter neighbors ~f:print_endline;
+   List.filter neighbors ~f:(fun x -> not (String.contains x '?' ||
+   String.contains x ':')) |> List.iter ~f:(fun neighbor -> match
+   Hash_set.find visited ~f:(fun y -> String.equal neighbor y) with | Some _
+   -> () | _ -> Queue.enqueue to_visit (neighbor, history @ [ page ]);
+   Hash_set.add visited neighbor)) done; Stack.to_list path ;; *)
+
 (* [find_path] should attempt to find a path between the origin article and
    the destination article via linked articles.
 
@@ -154,12 +172,50 @@ let visualize_command =
 
    [max_depth] is useful to limit the time the program spends exploring the
    graph. *)
-let find_path ?(max_depth = 3) ~origin ~destination ~how_to_fetch () =
-  ignore (max_depth : int);
-  ignore (origin : string);
-  ignore (destination : string);
-  ignore (how_to_fetch : File_fetcher.How_to_fetch.t);
-  failwith "TODO"
+
+let rec find_path
+  ?(max_depth = 3)
+  ~origin
+  ~destination
+  ~visited
+  ~how_to_fetch
+  ()
+  =
+  Hash_set.add visited origin;
+  if max_depth = 0
+  then []
+  else if String.equal origin destination
+  then [ destination ]
+  else (
+    let origin_link =
+      match how_to_fetch with
+      | File_fetcher.How_to_fetch.Local root ->
+        ignore root;
+        origin
+      | Remote -> "https://en.wikipedia.org" ^ origin
+    in
+    let neighbors =
+      get_linked_articles
+        (File_fetcher.fetch_exn how_to_fetch ~resource:origin_link)
+    in
+    List.filter neighbors ~f:(fun x ->
+      not (String.contains x '?' || String.contains x ':'))
+    |> List.concat_map ~f:(fun neighbor ->
+      match Hash_set.find visited ~f:(fun y -> String.equal neighbor y) with
+      | Some _ -> []
+      | _ ->
+        let neighbor_path =
+          find_path
+            ~max_depth:(max_depth - 1)
+            ~origin:neighbor
+            ~destination
+            ~visited
+            ~how_to_fetch
+            ()
+        in
+        (match neighbor_path with
+         | [] -> []
+         | _ -> [ origin ] @ neighbor_path)))
 ;;
 
 let find_path_command =
@@ -180,9 +236,32 @@ let find_path_command =
           ~doc:"INT maximum length of path to search for (default 10)"
       in
       fun () ->
-        match find_path ~max_depth ~origin ~destination ~how_to_fetch () with
-        | None -> print_endline "No path found!"
-        | Some trace -> List.iter trace ~f:print_endline]
+        let visited = Hash_set.create (module String) in
+        let origin_link, destination_link =
+          match how_to_fetch with
+          | Local root ->
+            ignore root;
+            origin, destination
+          | Remote ->
+            ( String.chop_prefix_exn origin ~prefix:"https://en.wikipedia.org"
+            , String.chop_prefix_exn
+                destination
+                ~prefix:"https://en.wikipedia.org" )
+        in
+        let path =
+          find_path
+            ~max_depth
+            ~origin:origin_link
+            ~destination:destination_link
+            ~visited
+            ~how_to_fetch
+            ()
+        in
+        (* bfs: ignore max_depth; let path = find_path ~origin:origin_link
+           ~destination:destination_link ~how_to_fetch () in *)
+        if List.is_empty path
+        then print_endline "No path found!"
+        else List.iter path ~f:print_endline]
 ;;
 
 let command =

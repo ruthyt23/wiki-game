@@ -28,17 +28,15 @@ let find_start_pos maze_array =
   let found = ref false in
   let row = ref 0 in
   let col = ref 0 in
-  while not found.contents do
-    if Char.equal
-         (position_val ~maze_array ~row:row.contents ~col:col.contents)
-         'S'
+  while not !found do
+    if Char.equal (position_val ~maze_array ~row:!row ~col:!col) 'S'
     then found.contents <- true
     else (
-      col.contents <- col.contents + 1;
+      col.contents <- !col + 1;
       if col.contents = array_length maze_array
       then (
         col.contents <- 0;
-        row.contents <- row.contents + 1)
+        row.contents <- !row + 1)
       else ())
   done;
   !row, !col
